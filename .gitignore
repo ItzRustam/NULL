@@ -1,0 +1,12 @@
+__pycache__/*
+
+*.pyc
+
+# Raw Planning
+plans/
+
+# Environment
+.venv
+.env
+
+.vscode
