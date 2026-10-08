@@ -10,3 +10,6 @@ plans/
 .env
 
 .vscode
+
+# agent workspace
+agent_workspace/
