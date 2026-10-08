@@ -88,7 +88,7 @@ class SafeParser:
         except (ValidationError, json.JSONDecodeError):
             rprint("[red]LOG: Cod Parser Fallback applying")
             # returning by applying schema
-            return CodOutput(status="Idle", response=cleared_response.strip(), task="Nothing")
+            return CodOutput(status="Idle", summary=cleared_response.strip(), task="Nothing")
 
     @staticmethod
     def parse_alex(response : str):
