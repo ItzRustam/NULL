@@ -95,7 +95,7 @@ def validate_run_python_code(resolved_path : Path) -> CodeSecurityAudit:
     model = ChatGroq(model=__MODEL__JOHN__, temperature=0.0, max_tokens=500)
 
     john_prompt_template = ChatPromptTemplate.from_messages([
-        ("system", john_system_message),
+        john_system_message,
         ("human", "Inspect this code context for execution authorization:\n\n{audited_snippet}")
     ])
 
@@ -103,8 +103,6 @@ def validate_run_python_code(resolved_path : Path) -> CodeSecurityAudit:
 
     result = john.invoke({"audited_snippet" : data}) # Data is under 1500 characters here
     return result
-
-
 
 @tool
 def run_python_code(filename: str) -> str:
@@ -139,6 +137,7 @@ def run_python_code(filename: str) -> str:
             [sys.executable, str(file_path)],
             capture_output=True,
             text=True,
+            timeout=30 # to prevent from infinite loop.
         )
 
         output = result.stdout
