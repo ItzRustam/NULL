@@ -94,7 +94,7 @@ def run_null(query : str) -> AIMessage:
             response = null_parser.invoke(result)
             return response
         except Exception as E:
-            response = SafeParser().parse_null(response=result)
+            response = SafeParser().parse_null(response=result.content)
             return response
 
 

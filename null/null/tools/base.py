@@ -9,7 +9,7 @@ from null.cod import run_cod
 
 # Adding Cod
 @tool
-def call_cod(task : str) -> CodOutput:
+def call_cod(task : str, difficulty : str) -> CodOutput:
     """
     Calls the COD sub-agent (File Manager) to perform local file system operations.
 
@@ -25,12 +25,13 @@ def call_cod(task : str) -> CodOutput:
 
     Args:
         task (str): The mechanical instruction detailing the specific file operation, exact path, and exact payload.
+        difficulty (str): The difficulty set to the task MUST BE `easy` or `hard` nothing else and in small letters.
 
     Returns:
         CodOutput: A structured observation containing the status, task executed, and summary. If a parser conflict occurs (Fallback status or Idle task), NULL must immediately recall this tool with a simpler, broken-down task.
     """
 
-    result : CodOutput = run_cod(query=task)
+    result : CodOutput = run_cod(query=task, difficulty=difficulty)
     return result
 
 # More sub-agents will be added here soon
