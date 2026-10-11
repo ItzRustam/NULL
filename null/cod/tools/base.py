@@ -5,9 +5,18 @@
 
 
 from langchain_core.tools import tool
+from langchain_groq import ChatGroq
 import sys
 from pathlib import Path
 from typing import Union, Tuple
+from null import john_system_message, john_parser, CodeSecurityAudit
+from dotenv import load_dotenv
+from langchain_core.prompts import ChatPromptTemplate
+
+load_dotenv()
+import os
+
+__MODEL__JOHN__ = os.getenv("TOOl_SECURITY")
 
 WORKSPACE = Path("./agent_workspace")
 WORKSPACE.mkdir(exist_ok=True)
@@ -70,7 +79,32 @@ def find_file(filename: str) -> Union[bool, str]:
         return file_path.exists() and file_path.is_file()
     except Exception as e:
         return f"Error: Failed to find file. Details: {str(e)}"
-    
+
+
+def validate_run_python_code(resolved_path : Path) -> CodeSecurityAudit:
+    """Validate code before running for SECURITY REASON"""
+
+    # reading file for 1500 character cutoff
+    data = resolved_path.read_text(encoding="utf-8")
+    characters_length = len(data)
+
+    if characters_length > 1500:
+        return CodeSecurityAudit(run_code=False, reason="File is Bigger than 1500 Character. Refused to run")
+    # else
+
+    model = ChatGroq(model=__MODEL__JOHN__, temperature=0.0, max_tokens=500)
+
+    john_prompt_template = ChatPromptTemplate.from_messages([
+        ("system", john_system_message),
+        ("human", "Inspect this code context for execution authorization:\n\n{audited_snippet}")
+    ])
+
+    john = john_prompt_template | model | john_parser
+
+    result = john.invoke({"audited_snippet" : data}) # Data is under 1500 characters here
+    return result
+
+
 
 @tool
 def run_python_code(filename: str) -> str:
@@ -94,6 +128,13 @@ def run_python_code(filename: str) -> str:
         return f"Error: {filename} is a directory, not a python file."
 
     try:
+
+        validation_report = validate_run_python_code(resolved_path=file_path)
+
+        if not validation_report.run_code:  #if False
+            return f"REFUSAL: Execution blocked by security engine. Reason: {validation_report.reason}"
+        # else run the code
+
         result = subprocess.run(
             [sys.executable, str(file_path)],
             capture_output=True,
@@ -134,7 +175,12 @@ def read_file(filename: str) -> str:
         return f"Error: {filename} is a directory, not a file."
 
     try:
-        return path.read_text(encoding="utf-8")
+        data = path.read_text(encoding="utf-8")
+        if len(data) <=1500:
+            return f"data={data}, No CutOff Happened size was: {len(data)}"
+        else:
+            return f"data={data[:1500]}, CutOff Happened size was: {len(data)}"
+        
     except UnicodeDecodeError:
         return f"Error: Cannot read {filename}. It might be a binary file or have an unsupported encoding."
     except Exception as e:

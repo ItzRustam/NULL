@@ -15,6 +15,7 @@ from .parsers import (
     TechnoOutput,
     AlexOutput,
     CoreXOutput,
+    CodeSecurityAudit,
 
     # SafeParser Class
     SafeParser,
@@ -25,10 +26,12 @@ from .parsers import (
     alex_parser,
     techno_parser,
     corex_parser,
+    john_parser,
 )
 from .prompts import (
     null_system_prompt,
-    cod_system_prompt
+    cod_system_prompt,
+    john_system_message
 )
 
 
@@ -52,5 +55,6 @@ __all__ = [
 
     # system prompts
     "null_system_prompt",
-    "cod_system_prompt"
+    "cod_system_prompt",
+    "john_system_message"
 ]
