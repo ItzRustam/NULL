@@ -16,6 +16,16 @@ import json
 from typing import List, Dict, Any
 from rich import print as rprint
 
+
+class CodeSecurityAudit(BaseModel):
+    """Structured response schema for verifying code execution safety flags."""
+    run_code: bool = Field(
+        description="Set to True if the code context contains no malicious, harmful, or destructive commands. Set to False if dangerous."
+    )
+    reason: str = Field(
+        description="A concise, technical sentence explaining why the code was approved or exactly what safety risk/malicious pattern was flagged."
+    )
+
 class NullOutput(BaseModel):
     status: str = Field(..., description="workflow status (e.g., 'Error', 'Success')")
     response: str = Field(..., description="Detailed explanation of work and your response for user query")
@@ -130,3 +140,4 @@ cod_parser = PydanticOutputParser(pydantic_object=CodOutput)
 alex_parser = PydanticOutputParser(pydantic_object=AlexOutput)
 techno_parser = PydanticOutputParser(pydantic_object=TechnoOutput)
 corex_parser = PydanticOutputParser(pydantic_object=CoreXOutput)
+john_parser = PydanticOutputParser(pydantic_object=CodeSecurityAudit)

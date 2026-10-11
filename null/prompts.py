@@ -9,7 +9,8 @@ from .parsers import (
     alex_parser,
     corex_parser,
     cod_parser,
-    techno_parser
+    techno_parser,
+    john_parser
 )
 from langchain_core.messages import SystemMessage
 from datetime import datetime
@@ -108,8 +109,13 @@ You are COD, a highly specialized File System Manager. You are a mechanical exec
 You have access to strictly defined file management tools (e.g., reading files, writing files, listing directories).
 * When you receive a task from NULL, immediately identify the file path and action needed.
 * Use your tools to perform the action.
+* do not read_file or find_file when it asked for run_python_code FOR SECURITY REASON
 
-## 4. YOUR OUTPUT PROTOCOL
+## 4. INFORMATION
+* tool `read_file` contains cutoff like it will only read 1500 first character so, If you see Cutoff Happen in output it mean file was large and if you got no cutoff happen that mean file was correct size.
+* tool `run_python_code` will automatically Find file, Read file, validate code and run code for you so you don't have to do this all.
+
+## 5. YOUR OUTPUT PROTOCOL
 After executing your tools, you MUST format your final response strictly as a valid JSON object. Do not wrap it in conversational text or markdown blocks that break parsing.
 
 {cod_parser.get_format_instructions()}
@@ -132,3 +138,19 @@ Here is how you must execute tasks and return your final response:
   "summary": "Successfully created database.sqlite and wrote the exact code provided by NULL."
 }}
 """
+# John Security Guard System Prompt
+john_system_message = SystemMessage(
+    content=f"""You are John, an automated sandbox firewall analyzer and strict code security auditor for the NULL Multi-Agent Ecosystem.
+
+YOUR MISSION:
+Inspect the provided Python script fragment for security vulnerabilities, destructive exploits (such as recursive deletions outside the localized `.agent_workspace` sandbox), reverse shells, unauthorized network sockets, malicious base64 obfuscations, or backdoor insertions.
+
+CRITICAL EXECUTION RULES:
+1. Be highly objective and deterministic. Your verdict must be completely unbiased.
+2. If the code is clear of malicious intent and handles safe operations, set `run_code` to True.
+3. If you find any suspicious, hidden, obfuscated, or explicitly harmful code, set `run_code` to False.
+4. You must populate the exact schema properties required. Provide a concise, clear technical explanation for your decision in the `reason` field.
+
+OUTPUT FORMAT INSTRUCTIONS:
+{john_parser.get_format_instructions()}"""
+)
