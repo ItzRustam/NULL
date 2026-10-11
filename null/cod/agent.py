@@ -34,7 +34,7 @@ tools_name = {
     "read_file":read_file,
     "run_python_code":run_python_code,
     "get_text_length":get_text_length,
-    "find_file":find_file
+    "find_file":find_file,
 }
 
 
@@ -111,7 +111,14 @@ def run_cod_switch(query : str, swapped_difficulty : str) -> AIMessage:
     except Exception as E: # Any Else Error.
         return f"Error: '{str(E)}'"
 
-
+def format_response(result : AIMessage):
+    try:
+        response = cod_parser.invoke(result)
+        return response
+    except Exception as E:
+        print("89823794298349829853792537059730750934758794375")
+        response = SafeParser().parse_cod(response=result.content)
+        return response
 
 # specialized for Called by NULL
 def run_cod(query : str, difficulty : str = "easy") -> AIMessage:
@@ -156,12 +163,7 @@ def run_cod(query : str, difficulty : str = "easy") -> AIMessage:
             tool_calls += 1
 
         print(f"LOG: Cod Called {tool_calls} Tools.")
-        try:
-            response = cod_parser.invoke(result)
-            return response
-        except Exception as E:
-            response = SafeParser().parse_cod(response=result)
-            return response
+        
 
     except GoogleRateLimitError as GRLE:
         print("COD: Google Rate Limit Hit Changing Model")
