@@ -7,7 +7,7 @@ from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_google_genai import ChatGoogleGenerativeAI # gemini model
 from dotenv import load_dotenv
 from rich import print
-from null.null.tools import call_cod
+from null.null.tools import call_cod, call_techno
 from warnings import filterwarnings
 
 filterwarnings("ignore")
@@ -25,7 +25,8 @@ MAX_TOOL_CALL = int(os.getenv("MAX_TOOL_CALLS", 15))
 
 # more agents will be added
 agent_names = {
-    "call_cod":call_cod
+    "call_cod":call_cod,
+    "call_techno":call_techno,
 }
 
 """NOTE: NULL memory will be stored until the Agent runs."""
@@ -33,17 +34,26 @@ agent_names = {
 message = [null_system_prompt]
 
 def create_null():
-    agents = [call_cod]
+    agents = [call_cod, call_techno]
 
-    llm = ChatGoogleGenerativeAI(model=MODEL_NAME, temperature=0.3,
-                                 safety_settings={
-        HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_ONLY_HIGH,
-    })
+    llm = ChatGoogleGenerativeAI(model=MODEL_NAME, temperature=0.2)
 
 
     agent = llm.bind_tools(tools=agents)
 
     return agent
+
+def inject_success_reminder(tool_result: dict) -> str:
+    """
+    Generate a system reminder to prevent the LLM from repeating a successful tool call.
+    """
+    if tool_result.get("status") == "Success" or "Success" in str(tool_result.get("summary", "")):
+        return (
+            "The previous tool call completed successfully. "
+            "Do NOT call the same tool with the same arguments again. "
+            "Proceed to generate your final response to the user."
+        )
+    return ""
 
 def run_null(query : str) -> AIMessage:
     """Do Task for Given Query
@@ -58,10 +68,13 @@ def run_null(query : str) -> AIMessage:
         result = Null.invoke(message)
         message.append(result)
 
+
         tool_calls = 0
         while result.tool_calls:
             if tool_calls > MAX_TOOL_CALL:
                 return SafeParser.parse_cod(response="Error: Too Many Tool Called try to change MAX_TOOL_CALLS on .env")
+
+            print(result)
 
             tool_info = result.tool_calls[0]
 
@@ -85,6 +98,7 @@ def run_null(query : str) -> AIMessage:
             )
 
             message.append(tool_result)
+            message.append(inject_success_reminder(tool_result=tool_result.model_dump()))
 
             result = Null.invoke(message)
             tool_calls += 1
