@@ -31,7 +31,17 @@ from .parsers import (
 from .prompts import (
     null_system_prompt,
     cod_system_prompt,
-    john_system_message
+    john_system_message,
+    techno_system_prompt
+)
+
+# Agents
+from . import (
+    techno,
+    cod,
+
+    # Head Agent
+    null
 )
 
 
@@ -56,5 +66,13 @@ __all__ = [
     # system prompts
     "null_system_prompt",
     "cod_system_prompt",
-    "john_system_message"
+    "john_system_message",
+    "techno_system_prompt",
+
+    # Agents
+    "techno",
+    "cod",
+
+    # Head Agent
+    "null"
 ]
