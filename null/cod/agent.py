@@ -25,7 +25,6 @@ import os
 from rich import print
 from null.cod.tools import * # Importing Tools
 
-MODEL_NAME = str(os.getenv("COD_MODEL"))
 MAX_TOOL_CALL = int(os.getenv("MAX_TOOL_CALLS", 15))
 
 tools_name = {
@@ -116,7 +115,6 @@ def format_response(result : AIMessage):
         response = cod_parser.invoke(result)
         return response
     except Exception as E:
-        print("89823794298349829853792537059730750934758794375")
         response = SafeParser().parse_cod(response=result.content)
         return response
 
@@ -163,7 +161,7 @@ def run_cod(query : str, difficulty : str = "easy") -> AIMessage:
             tool_calls += 1
 
         print(f"LOG: Cod Called {tool_calls} Tools.")
-        
+        return format_response(result=result)
 
     except GoogleRateLimitError as GRLE:
         print("COD: Google Rate Limit Hit Changing Model")
