@@ -158,6 +158,7 @@ def run_cod(query : str, difficulty : str = "easy") -> AIMessage:
             message.append(tool_result)
 
             result = cod_agent.invoke(message)
+            message.append(result)
             tool_calls += 1
 
         print(f"LOG: Cod Called {tool_calls} Tools.")

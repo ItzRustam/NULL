@@ -3,9 +3,10 @@
 
 """All The Agent will be wrapped as Tools"""
 from langchain_core.tools import tool
-from null.parsers import CodOutput, TechnoOutput
+from null.parsers import CodOutput, TechnoOutput, AlexOutput
 from null.cod import run_cod
 from null.techno import run_techno
+from null.alex import run_alex
 
 
 # Adding Cod
@@ -54,6 +55,30 @@ def call_techno(task : str) -> TechnoOutput:
     TechnoOutput: A structured observation containing the status, task executed, summary, and raw API result. If a parser conflict occurs (Fallback status or Idle task), NULL must immediately recall this tool with a simpler, corrected task.
     """
     result : TechnoOutput = run_techno(query=task)
+    return result
+
+@tool
+def call_alex(task : str) -> AlexOutput:
+    """
+    Calls the ALEX sub-agent (RESEARCHER) to gather deep context via Web, Wikipedia, and ArXiv.
+
+    Capabilities:
+    Use this tool exclusively to search the web, Wikipedia, and arXiv for accurate, up-to-date information. Alex is a dedicated researcher — it does not write code, manage files, execute APIs, or run Python scripts.
+
+    Task Formatting Rules (CRITICAL):
+    ALEX operates strictly as a mechanical information-gathering agent without reasoning capabilities. The `task` string must be highly explicit, direct, and focused on research.
+    - Specify exactly what to search (topic, keywords, or query).
+    - Specify the source if needed: Web, Wikipedia, or ArXiv.
+    - Do not instruct ALEX to analyze, summarize beyond the source, write files, or execute code.
+    - Example of a correct task: "Search Wikipedia for 'Artificial Intelligence' and return the article summary."
+
+    Args:
+        task (str): The research instruction detailing the exact topic, keywords, and preferred source (Web, Wikipedia, or ArXiv).
+
+    Returns:
+        AlexOutput: A structured observation containing the status, task executed, and research findings. If a parser conflict occurs (Fallback status or Idle task), NULL must immediately recall this tool with a simpler, corrected task.
+    """
+    result : AlexOutput = run_alex(query=task)
     return result
 
 # More sub-agents will be added here soon

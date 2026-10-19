@@ -27,3 +27,8 @@ response = run_null(query="""send a http request to url's /v1/gemini/chat with D
         "thinking_budget": None
         } and remove all values which contains None and save all api response to result.txt and show me this result also.""")
 print(response)
+
+# Test NULL, Alex and Cod connectivity
+# NULL should route to Alex for research, then to Cod to create a file
+response = run_null(query="Search Wikipedia for 'Python programming language' and save the summary to python_summary.txt")
+print(response)

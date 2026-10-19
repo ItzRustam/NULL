@@ -61,7 +61,7 @@ def run_techno(query : str) -> AIMessage:
         tool_calls = 0
         while result.tool_calls:
             if tool_calls > MAX_TOOL_CALL:
-                return SafeParser.parse_cod(response="Error: Too Many Tool Called try to change MAX_TOOL_CALLS on .env")
+                return SafeParser.parse_techno(response="Error: Too Many Tool Called try to change MAX_TOOL_CALLS on .env")
 
             tool_info = result.tool_calls[0]
             print("Current Tool Call: ", tool_info)
@@ -80,13 +80,14 @@ def run_techno(query : str) -> AIMessage:
             message.append(tool_result)
 
             result = techno_agent.invoke(message)
+            message.append(result) # security
             tool_calls += 1
 
-        print(f"LOG: Cod Called {tool_calls} Tools.")
+        print(f"LOG: Techno Called {tool_calls} Tools.")
         return format_response(result=result)
 
     except GoogleRateLimitError as GRLE:
-        print("COD: Google Rate Limit Hit Changing Model")
+        print("Techno: Google Rate Limit Hit Changing Model")
         return f"Error: {str(GRLE)}"
     except Exception as E:
         return f"Error: '{str(E)}'"
