@@ -47,6 +47,7 @@ class AlexOutput(BaseModel):
     status: str = Field(..., description="Research status (e.g, 'Success', 'Failed')")
     content: str = Field(..., description="Synthesized research findings")
     task: str = Field(..., description="The research task assigned")
+    source : str = Field(..., description="The Source of research (e.g, 'web', 'wikipedia')")
 
 class CoreXOutput(BaseModel):
     status: str = Field(..., description="Code generation status (e.g, 'Success', 'Failed')")
@@ -109,7 +110,7 @@ class SafeParser:
         except (ValidationError, json.JSONDecodeError):
             rprint("[red]LOG: Alex Parser Fallback applying")
             # returning by applying schema
-            return AlexOutput(status="Idle", content=cleared_response.strip(), task="Nothing")
+            return AlexOutput(status="Idle", content=cleared_response.strip(), task="Nothing", source="unknown")
 
     @staticmethod
     def parse_techno(response : str):

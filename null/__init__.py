@@ -32,16 +32,18 @@ from .prompts import (
     null_system_prompt,
     cod_system_prompt,
     john_system_message,
-    techno_system_prompt
+    techno_system_prompt,
+    alex_system_prompt
 )
 
 # Agents
 from . import (
     techno,
     cod,
-
+    alex,
+    
     # Head Agent
-    null
+    null,
 )
 
 
@@ -68,11 +70,13 @@ __all__ = [
     "cod_system_prompt",
     "john_system_message",
     "techno_system_prompt",
+    "alex_system_prompt"
 
     # Agents
     "techno",
     "cod",
+    "alex"
 
     # Head Agent
-    "null"
+    "null",
 ]
