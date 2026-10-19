@@ -3,18 +3,18 @@
 
 """NULL HEAD Agent ReAct Loop"""
 
-from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
+from langchain_core.messages import AIMessage, HumanMessage, ToolMessage, SystemMessage
 from langchain_google_genai import ChatGoogleGenerativeAI # gemini model
 from dotenv import load_dotenv
 from rich import print
 from null.null.tools import call_cod, call_techno
 from warnings import filterwarnings
+from random import randint
 
 filterwarnings("ignore")
 
 load_dotenv()
 
-from langchain_google_genai import HarmCategory, HarmBlockThreshold
 # For security
 
 import os
@@ -36,24 +36,81 @@ message = [null_system_prompt]
 def create_null():
     agents = [call_cod, call_techno]
 
-    llm = ChatGoogleGenerativeAI(model=MODEL_NAME, temperature=0.2)
+    llm = ChatGoogleGenerativeAI(model=MODEL_NAME, temperature=0)
 
 
     agent = llm.bind_tools(tools=agents)
 
     return agent
 
+"""Tool Security - Deprecated"""
 def inject_success_reminder(tool_result: dict) -> str:
     """
     Generate a system reminder to prevent the LLM from repeating a successful tool call.
     """
+    print("called")
     if tool_result.get("status") == "Success" or "Success" in str(tool_result.get("summary", "")):
+        print("called")
         return (
             "The previous tool call completed successfully. "
             "Do NOT call the same tool with the same arguments again. "
             "Proceed to generate your final response to the user."
         )
     return ""
+
+class ToolSafety:
+    def __init__(self):
+        self.tool_used = {}
+        self.tool_status = {}
+    
+    def check_used_tool(self, tool_name : str, tool_args : dict) -> bool:
+        """Check if Tool is already used with Success Flag
+        True :- Continue this Tool call
+        False :- Deny It, already been called.
+        """
+        tool_data = {
+            "name" : tool_name
+        }
+
+        # merging tool call into one clear dict
+        tool_data |= tool_args
+        print(tool_data)
+        for tool_id, data in self.tool_used.items():
+            if data == tool_data:
+                status = self.tool_status.get(tool_id)
+                if status == "Success":
+                    return False
+                else:
+                    pass
+            else:
+                pass
+
+        return True
+
+
+    def _generate_id(self, end_range : int) -> int:
+        """Generate a Unique ID for Tools data"""
+        tool_id = str(randint(1, end_range))
+
+        while tool_id in self.tool_status and tool_id in self.tool_used:
+            tool_id = str(randint(1, end_range))
+
+        return tool_id
+    
+    def update_used_tool(self, tool_info : dict, status : str) -> None:
+        """update tool info with latest tool call"""
+        tool_name = tool_info.get("name")
+        args = tool_info.get("args")
+        tool_data = {
+            "name" : tool_name
+        }
+
+        # merging tool call into one clear dict
+        tool_data |= args
+
+        tool_id = self._generate_id(end_range=100000)
+        self.tool_used[tool_id] = tool_data
+        self.tool_status[tool_id] = status
 
 def run_null(query : str) -> AIMessage:
     """Do Task for Given Query
@@ -62,19 +119,18 @@ def run_null(query : str) -> AIMessage:
     Null = create_null()
 
     message.append(HumanMessage(content=query))
-
+    # guard = ToolSafety() # to prevent calling same tool again and again
     # generating first response
     try:
         result = Null.invoke(message)
         message.append(result)
 
-
         tool_calls = 0
         while result.tool_calls:
             if tool_calls > MAX_TOOL_CALL:
-                return SafeParser.parse_cod(response="Error: Too Many Tool Called try to change MAX_TOOL_CALLS on .env")
+                return SafeParser.parse_null(response="Error: Too Many Tool Called try to change MAX_TOOL_CALLS on .env")
 
-            print(result)
+            # print(result)
 
             tool_info = result.tool_calls[0]
 
@@ -85,22 +141,36 @@ def run_null(query : str) -> AIMessage:
             if approve.lower() == "y":
                 pass
             else:
-                print("User Denied The Agent Request")
-                break
+                return "Tool Denied"
 
-            tool_result = chosen_tool.invoke(tool_info["args"])
+            """
+            maybe Useful in Future
 
-            print(f"NULL: Agent Result {tool_result}")
+            tool_allow = guard.check_used_tool(tool_name=tool_info["name"], tool_args=tool_info["args"])
+            if not(tool_allow):
+                print("ToolSafety: Already used tool")
+                print("Cancel/approve")
+                UserInp = input("y (cancel) / n (approve): ")
+
+                if "y" in UserInp.lower():
+                    print("Stopping tool call")
+                    message.append(SystemMessage(content=f"Tool {tool_info} already used for same work, continue for other task or generate a final response for user. DO NOT try to call same tool again for same work."))
+                else:
+                    pass
+            """
+            tool_result_raw = chosen_tool.invoke(tool_info["args"])
+
+            print(f"NULL: Agent Result {tool_result_raw}")
 
             tool_result = ToolMessage(
-                content=tool_result,
+                content=tool_result_raw,
                 tool_call_id=tool_info["id"]
             )
 
-            message.append(tool_result)
-            message.append(inject_success_reminder(tool_result=tool_result.model_dump()))
 
+            message.append(tool_result)
             result = Null.invoke(message)
+            message.append(result)
             tool_calls += 1
 
         print(f"LOG: NULL Called {tool_calls} Tools.")

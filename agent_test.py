@@ -25,5 +25,5 @@ response = run_null(query="""send a http request to url's /v1/gemini/chat with D
         "end_point" : None,
         "thinking_level": None,
         "thinking_budget": None
-        } amd remove all values which contains None and save all api response to result.txt""")
+        } and remove all values which contains None and save all api response to result.txt and show me this result also.""")
 print(response)
