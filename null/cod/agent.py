@@ -77,13 +77,9 @@ def run_cod_switch(query : str, swapped_difficulty : str) -> AIMessage:
                 return SafeParser.parse_cod(response="Error: Too Many Tool Called try to change MAX_TOOL_CALLS on .env")
 
             tool_info = result.tool_calls[0]
-            print("Current Tool Call: ", tool_info)
-
             chosen_tool = tools_name[tool_info["name"]]
 
             tool_result = chosen_tool.invoke(tool_info["args"])
-
-            print(f"COD: Tool Result {tool_result}")
 
             tool_result = ToolMessage(
                 content=str(tool_result),
@@ -95,7 +91,6 @@ def run_cod_switch(query : str, swapped_difficulty : str) -> AIMessage:
             result = cod_agent.invoke(message)
             tool_calls += 1
 
-        print(f"LOG: Cod Called {tool_calls} Tools.")
         try:
             response = cod_parser.invoke(result)
             return response
@@ -142,13 +137,9 @@ def run_cod(query : str, difficulty : str = "easy") -> AIMessage:
                 return SafeParser.parse_cod(response="Error: Too Many Tool Called try to change MAX_TOOL_CALLS on .env")
 
             tool_info = result.tool_calls[0]
-            print("Current Tool Call: ", tool_info)
-
             chosen_tool = tools_name[tool_info["name"]]
 
             tool_result = chosen_tool.invoke(tool_info["args"])
-
-            print(f"COD: Tool Result {tool_result}")
 
             tool_result = ToolMessage(
                 content=str(tool_result),
@@ -161,14 +152,11 @@ def run_cod(query : str, difficulty : str = "easy") -> AIMessage:
             message.append(result)
             tool_calls += 1
 
-        print(f"LOG: Cod Called {tool_calls} Tools.")
         return format_response(result=result)
 
     except GoogleRateLimitError as GRLE:
-        print("COD: Google Rate Limit Hit Changing Model")
         return run_cod_switch(query=query, swapped_difficulty="hard") # Switch to Groq 120B oss-gpt Hard
     except GroqRateLimitError as GRLE:
-        print("COD: Groq Rate Limit Hit Changing Model")
         return run_cod_switch(query=query, swapped_difficulty="easy") # Switch to Gemma 4 31B Google Easy
     except Exception as E:
         return f"Error: '{str(E)}'"

@@ -6,7 +6,12 @@
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage, SystemMessage
 from langchain_google_genai import ChatGoogleGenerativeAI # gemini model
 from dotenv import load_dotenv
-from rich import print
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+from rich import box
+
+console = Console()
 from null.null.tools import call_cod, call_techno, call_alex, call_corex
 from warnings import filterwarnings
 from random import randint
@@ -50,9 +55,7 @@ def inject_success_reminder(tool_result: dict) -> str:
     """
     Generate a system reminder to prevent the LLM from repeating a successful tool call.
     """
-    print("called")
     if tool_result.get("status") == "Success" or "Success" in str(tool_result.get("summary", "")):
-        print("called")
         return (
             "The previous tool call completed successfully. "
             "Do NOT call the same tool with the same arguments again. "
@@ -76,7 +79,6 @@ class ToolSafety:
 
         # merging tool call into one clear dict
         tool_data |= tool_args
-        print(tool_data)
         for tool_id, data in self.tool_used.items():
             if data == tool_data:
                 status = self.tool_status.get(tool_id)
@@ -114,6 +116,48 @@ class ToolSafety:
         self.tool_used[tool_id] = tool_data
         self.tool_status[tool_id] = status
 
+def display_null_tool_call(tool_info: dict):
+    """Render a visually appealing representation of NULL delegating a task to a sub-agent."""
+    tool_name = tool_info.get("name", "")
+    args = tool_info.get("args", {})
+
+    agent_meta = {
+        "call_cod": {"name": "COD", "color": "green", "icon": "📁", "desc": "File System & Safe Execution"},
+        "call_techno": {"name": "TECHNO", "color": "yellow", "icon": "🌐", "desc": "API & Gateway Requests"},
+        "call_alex": {"name": "ALEX", "color": "blue", "icon": "🔍", "desc": "Deep Researcher (Web, Wiki, ArXiv)"},
+        "call_corex": {"name": "COREX", "color": "red", "icon": "💻", "desc": "Code Generation & Logic"},
+    }
+
+    meta = agent_meta.get(
+        tool_name,
+        {"name": tool_name.replace("call_", "").upper(), "color": "cyan", "icon": "⚙️", "desc": "Sub-Agent"}
+    )
+    color = meta["color"]
+
+    grid = Table.grid(padding=(0, 1))
+    grid.add_column(style="bold bright_white", no_wrap=True)
+    grid.add_column(style="white")
+
+    grid.add_row("Agent:", f"[bold {color}]{meta['icon']} {meta['name']}[/bold {color}] [dim]({meta['desc']})[/dim]")
+
+    task = args.get("task", "")
+    if task:
+        grid.add_row("Task:", f"[italic bright_white]{task}[/italic bright_white]")
+
+    for k, v in args.items():
+        if k != "task":
+            grid.add_row(f"{k.capitalize()}:", f"[dim]{v}[/dim]")
+
+    console.print(
+        Panel(
+            grid,
+            box=box.ROUNDED,
+            border_style=f"bold {color}",
+            title=f"[bold bright_white on {color}] 🤖 NULL ➔ {meta['name']} [/bold bright_white on {color}]",
+            padding=(0, 1),
+        )
+    )
+
 def run_null(query : str) -> AIMessage:
     """Do Task for Given Query
     Memory is stored and will be wiped out when agent shutdown or restarted
@@ -121,8 +165,6 @@ def run_null(query : str) -> AIMessage:
     Null = create_null()
 
     message.append(HumanMessage(content=query))
-    # guard = ToolSafety() # to prevent calling same tool again and again
-    # generating first response
     try:
         result = Null.invoke(message)
         message.append(result)
@@ -132,57 +174,30 @@ def run_null(query : str) -> AIMessage:
             if tool_calls > MAX_TOOL_CALL:
                 return SafeParser.parse_null(response="Error: Too Many Tool Called try to change MAX_TOOL_CALLS on .env")
 
-            # print(result)
-
             tool_info = result.tool_calls[0]
-
             chosen_tool = agent_names[tool_info["name"]]
 
-            print(f"Null Want's to Call {tool_info}")
-            approve = input("y/n: ")
-            if approve.lower() == "y":
-                pass
-            else:
-                return "Tool Denied"
+            # Display sub-agent delegation beautifully without prompt
+            display_null_tool_call(tool_info)
 
-            """
-            maybe Useful in Future
-
-            tool_allow = guard.check_used_tool(tool_name=tool_info["name"], tool_args=tool_info["args"])
-            if not(tool_allow):
-                print("ToolSafety: Already used tool")
-                print("Cancel/approve")
-                UserInp = input("y (cancel) / n (approve): ")
-
-                if "y" in UserInp.lower():
-                    print("Stopping tool call")
-                    message.append(SystemMessage(content=f"Tool {tool_info} already used for same work, continue for other task or generate a final response for user. DO NOT try to call same tool again for same work."))
-                else:
-                    pass
-            """
             tool_result_raw = chosen_tool.invoke(tool_info["args"])
-
-            print(f"NULL: Agent Result {tool_result_raw}")
 
             tool_result = ToolMessage(
                 content=tool_result_raw,
                 tool_call_id=tool_info["id"]
             )
 
-
             message.append(tool_result)
             result = Null.invoke(message)
             message.append(result)
             tool_calls += 1
 
-        print(f"LOG: NULL Called {tool_calls} Tools.")
         try:
             response = null_parser.invoke(result)
             return response
         except Exception as E:
             response = SafeParser().parse_null(response=result.content)
             return response
-
 
     except Exception as E:
         return f"Error: '{str(E)}'"
