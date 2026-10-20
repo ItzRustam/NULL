@@ -86,8 +86,6 @@ class SafeParser:
         try:
             return NullOutput.model_validate_json(cleared_response)
         except (ValidationError, json.JSONDecodeError):
-            rprint("[red]LOG: Null Parser Fallback applying")
-
             return NullOutput(status="Idle", response=cleared_response.strip())
 
     @staticmethod
@@ -97,7 +95,6 @@ class SafeParser:
             return CodOutput.model_validate_json(cleared_response)
         
         except (ValidationError, json.JSONDecodeError):
-            rprint("[red]LOG: Cod Parser Fallback applying")
             # returning by applying schema
             return CodOutput(status="Idle", summary=cleared_response.strip(), task="Nothing")
 
@@ -108,7 +105,6 @@ class SafeParser:
             return AlexOutput.model_validate_json(cleared_response)
         
         except (ValidationError, json.JSONDecodeError):
-            rprint("[red]LOG: Alex Parser Fallback applying")
             # returning by applying schema
             return AlexOutput(status="Idle", content=cleared_response.strip(), task="Nothing", source="unknown")
 
@@ -119,7 +115,6 @@ class SafeParser:
             return TechnoOutput.model_validate_json(cleared_response)
         
         except (ValidationError, json.JSONDecodeError):
-            rprint("[red]LOG: Techno Parser Fallback applying")
             # returning by applying schema
             return TechnoOutput(status="Idle", summary=cleared_response.strip(), task="Nothing", api_result={"content" : "Nothing"})
 
@@ -130,7 +125,6 @@ class SafeParser:
             return CoreXOutput.model_validate_json(cleared_response)
         
         except (ValidationError, json.JSONDecodeError):
-            rprint("[red]LOG: CoreX Parser Fallback applying")
             # returning by applying schema
             return CoreXOutput(status="Idle", summary=cleared_response.strip(), task="Nothing", code=" ")
 
