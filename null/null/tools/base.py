@@ -3,10 +3,11 @@
 
 """All The Agent will be wrapped as Tools"""
 from langchain_core.tools import tool
-from null.parsers import CodOutput, TechnoOutput, AlexOutput
+from null.parsers import CodOutput, TechnoOutput, AlexOutput, CoreXOutput
 from null.cod import run_cod
 from null.techno import run_techno
 from null.alex import run_alex
+from null.corex import run_corex
 
 
 # Adding Cod
@@ -82,3 +83,27 @@ def call_alex(task : str) -> AlexOutput:
     return result
 
 # More sub-agents will be added here soon
+
+@tool
+def call_corex(task : str) -> CoreXOutput:
+    """
+    Calls the COREX sub-agent (Code Generator) to generate application logic, debug code, and structure software.
+
+    Capabilities:
+    Use this tool exclusively to generate code, debug existing code, and structure software projects. CoreX has web access to look up documentation and references while coding.
+
+    Task Formatting Rules (CRITICAL):
+    COREX operates strictly as a mechanical code-generation agent without reasoning capabilities. The `task` string must be highly explicit, direct, and focused on code generation.
+    - Specify exactly what code to generate (language, function name, logic).
+    - Specify the exact requirements and expected behavior.
+    - Do not instruct COREX to manage files, call APIs, or execute scripts.
+    - Example of a correct task: "Generate a Python function named 'sort_list' that takes a list of integers and returns them sorted using merge sort."
+
+    Args:
+        task (str): The code generation instruction detailing the exact coding task, language, and requirements.
+
+    Returns:
+        CoreXOutput: A structured observation containing the status, task executed, summary, and generated code. If a parser conflict occurs (Fallback status or Idle task), NULL must immediately recall this tool with a simpler, corrected task.
+    """
+    result : CoreXOutput = run_corex(query=task)
+    return result

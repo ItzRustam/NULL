@@ -32,3 +32,7 @@ print(response)
 # NULL should route to Alex for research, then to Cod to create a file
 response = run_null(query="Search Wikipedia for 'Python programming language' and save the summary to python_summary.txt")
 print(response)
+
+
+response = run_null(query="write code for a HTTP request in Go and save all the code in req.go")
+print(response)

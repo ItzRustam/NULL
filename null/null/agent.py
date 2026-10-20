@@ -7,7 +7,7 @@ from langchain_core.messages import AIMessage, HumanMessage, ToolMessage, System
 from langchain_google_genai import ChatGoogleGenerativeAI # gemini model
 from dotenv import load_dotenv
 from rich import print
-from null.null.tools import call_cod, call_techno, call_alex
+from null.null.tools import call_cod, call_techno, call_alex, call_corex
 from warnings import filterwarnings
 from random import randint
 
@@ -27,7 +27,8 @@ MAX_TOOL_CALL = int(os.getenv("MAX_TOOL_CALLS", 15))
 agent_names = {
     "call_cod":call_cod,
     "call_techno":call_techno,
-    "call_alex": call_alex
+    "call_alex": call_alex,
+    "call_corex": call_corex
 }
 
 """NOTE: NULL memory will be stored until the Agent runs."""
@@ -35,7 +36,7 @@ agent_names = {
 message = [null_system_prompt]
 
 def create_null():
-    agents = [call_cod, call_techno, call_alex]
+    agents = [call_cod, call_techno, call_alex, call_corex]
 
     llm = ChatGoogleGenerativeAI(model=MODEL_NAME, temperature=0)
 
